@@ -7,7 +7,7 @@ import (
 
 // A Keybox is a read-only object that stores secrets like API keys.
 type Keybox struct {
-	keys map[string]string
+	keys map[string]interface{}
 }
 
 // Open reads a Keybox from the specified file name.
@@ -26,5 +26,20 @@ func Open(filename string) (*Keybox, error) {
 // Get retrieves a key from the Keybox, returning the key and whether it is present in the Keybox.
 func (box *Keybox) Get(key string) (string, bool) {
 	value, exists := box.keys[key]
-	return value, exists
+	if exists {
+		value, casts := value.(string)
+		return value, casts
+	}
+	return "", exists
+}
+
+// GetBox retrieves a nested Keybox from the Keybox, returning the Keybox and whether it is present in the Keybox.
+func (box *Keybox) GetBox(key string) (*Keybox, bool) {
+	value, exists := box.keys[key].(map[string]interface{})
+	if exists {
+		return &Keybox{
+			keys: value,
+		}, true
+	}
+	return nil, exists
 }
